@@ -1,5 +1,7 @@
 # SFTP Outbox
 
+**This repo contains extracted dir `sda-sftp-inbox` from the https://github.com/neicnordic/sensitive-data-archive/tree/main/sda-sftp-inbox repo and modified as an outbox component.**
+
 ## Federated EGA/LocalEGA login system
 
 `CentralEGA` contains a database of users, with IDs and passwords.
