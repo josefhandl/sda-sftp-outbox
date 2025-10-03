@@ -16,13 +16,13 @@ RUN apk add --no-cache --upgrade ca-certificates java-cacerts libssl3 libcrypto3
 RUN addgroup -g 1000 lega && \
     adduser -D -u 1000 -G lega lega
 
-RUN mkdir -p /ega/inbox && \
-    chown lega:lega /ega/inbox && \
-    chmod 2770 /ega/inbox
+RUN mkdir -p /ega/outbox && \
+    chown lega:lega /ega/outbox && \
+    chmod 2770 /ega/outbox
 
-VOLUME /ega/inbox
+VOLUME /ega/outbox
 
-COPY --from=builder /target/inbox-0.0.3-SNAPSHOT.jar .
+COPY --from=builder /target/outbox-0.0.3-SNAPSHOT.jar .
 
 COPY entrypoint.sh .
 
@@ -32,4 +32,4 @@ RUN chmod +x entrypoint.sh
 
 # ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["java", "-jar", "inbox-0.0.3-SNAPSHOT.jar"]
+CMD ["java", "-jar", "outbox-0.0.3-SNAPSHOT.jar"]

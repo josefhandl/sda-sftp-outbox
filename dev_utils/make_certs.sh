@@ -22,8 +22,8 @@ openssl x509 -req -in ./certs/cega.csr -days 1200 -CA ./certs/ca.pem -CAkey ./ce
 openssl req -config "$(dirname "$0")"/ssl.cnf -new -nodes -newkey rsa:4096 -keyout ./certs/client-key.pem -out ./certs/client.csr -extensions client_cert
 openssl x509 -req -in ./certs/client.csr -days 1200 -CA ./certs/ca.pem -CAkey ./certs/ca-key.pem -set_serial 01 -out ./certs/client.pem -extensions server_cert -extfile "$(dirname "$0")"/ssl.cnf
 
-# Create inbox certificate
-openssl req -config "$(dirname "$0")"/ssl.cnf -new -nodes -newkey rsa:4096 -keyout ./certs/inbox-key.pem -out ./certs/inbox.csr -extensions server_cert
-openssl x509 -req -in ./certs/inbox.csr -days 1200 -CA ./certs/ca.pem -CAkey ./certs/ca-key.pem -set_serial 01 -out ./certs/inbox.pem -extensions server_cert -extfile "$(dirname "$0")"/ssl.cnf
+# Create outbox certificate
+openssl req -config "$(dirname "$0")"/ssl.cnf -new -nodes -newkey rsa:4096 -keyout ./certs/outbox-key.pem -out ./certs/outbox.csr -extensions server_cert
+openssl x509 -req -in ./certs/outbox.csr -days 1200 -CA ./certs/ca.pem -CAkey ./certs/ca-key.pem -set_serial 01 -out ./certs/outbox.pem -extensions server_cert -extfile "$(dirname "$0")"/ssl.cnf
 
 chmod 644 ./certs/*

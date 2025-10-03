@@ -5,13 +5,13 @@ on:
 
 jobs:
 
-  test_inbox_connectivity:
+  test_outbox_connectivity:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
       - name: Build image
-        run: docker build -t neicnordic/sda-inbox-sftp:latest .
+        run: docker build -t neicnordic/sda-outbox-sftp:latest .
       - name: Start Services
         run: |
           cd dev_utils

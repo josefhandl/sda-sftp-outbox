@@ -5,7 +5,7 @@ on:
 
 jobs:
 
-  test_inbox:
+  test_outbox:
     strategy:
       matrix:
         java-version: [19]

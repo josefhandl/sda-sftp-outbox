@@ -22,8 +22,8 @@ services:
                 -noprompt &&
         openssl pkcs12 -export \
                         -out /tls/keystore.p12 \
-                        -inkey /tls-certs/inbox-key.pem \
-                        -in /tls-certs/inbox.pem \
+                        -inkey /tls-certs/outbox-key.pem \
+                        -in /tls-certs/outbox.pem \
                         -passout pass:"$${KEYSTORE_PASSWORD}"
 
     container_name: certfixer
@@ -34,8 +34,8 @@ services:
       - java:/tls
     environment:
       - KEYSTORE_PASSWORD=testingthis
-  inbox:
-    image: neicnordic/sda-inbox-sftp
+  outbox:
+    image: neicnordic/sda-outbox-sftp
     ports:
       - "2222:2222"
     deploy:
@@ -60,7 +60,7 @@ services:
       - KEYSTORE_PATH=/etc/ssl/certs/java/keystore.p12
       - KEYSTORE_PASSWORD=testingthis
     volumes:
-      - inbox:/ega/inbox
+      - outbox:/ega/outbox
       - certs:/tls-certs
       - java:/etc/ssl/certs/java
     healthcheck:
@@ -126,6 +126,6 @@ services:
       retries: 3
 
 volumes:
-  inbox:
+  outbox:
   certs:
   java:
