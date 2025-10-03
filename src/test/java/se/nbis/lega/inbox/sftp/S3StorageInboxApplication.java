@@ -11,8 +11,6 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.google.gson.Gson;
 import io.findify.s3mock.S3Mock;
 import org.mockito.stubbing.Answer;
-import org.springframework.amqp.core.MessagePostProcessor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringBootConfiguration;
@@ -66,18 +64,6 @@ public class S3StorageInboxApplication {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate() {
-        RabbitTemplate mock = mock(RabbitTemplate.class);
-        doAnswer((Answer<Void>) invocationOnMock -> {
-            String routingKey = invocationOnMock.getArgument(1).toString();
-            BlockingQueue<FileDescriptor> queue = routingKey.equals(routingKeyFiles) ? fileBlockingQueue() : hashBlockingQueue();
-            queue.put(gson.fromJson(invocationOnMock.getArgument(2).toString(), FileDescriptor.class));
-            return null;
-        }).when(mock).convertAndSend(eq(exchange), anyString(), anyString(), any(MessagePostProcessor.class));
-        return mock;
-    }
-
-    @Bean
     public RestTemplate restTemplate() {
         return mock(RestTemplate.class);
     }
@@ -90,16 +76,6 @@ public class S3StorageInboxApplication {
     @Bean
     public BlockingQueue<FileDescriptor> hashBlockingQueue() {
         return new LinkedBlockingQueue<>();
-    }
-
-    @Value("${inbox.mq.exchange}")
-    public void setExchange(String exchange) {
-        this.exchange = exchange;
-    }
-
-    @Value("${inbox.mq.routing-key.files}")
-    public void setRoutingKeyFiles(String routingKeyFiles) {
-        this.routingKeyFiles = routingKeyFiles;
     }
 
     @Value("${inbox.s3.region}")

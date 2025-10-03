@@ -6,12 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.http.entity.ContentType;
 import org.apache.sshd.server.session.ServerSession;
 import org.apache.sshd.sftp.server.FileHandle;
 import org.apache.sshd.sftp.server.Handle;
 import org.apache.sshd.sftp.server.SftpEventListener;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -22,7 +20,6 @@ import se.nbis.lega.inbox.pojo.Operation;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.CopyOption;
 import java.nio.file.Path;
 import java.util.*;
@@ -32,7 +29,6 @@ import static org.apache.commons.codec.digest.MessageDigestAlgorithms.SHA_256;
 import static se.nbis.lega.inbox.pojo.Operation.*;
 
 /**
- * <code>SftpEventListener</code> implementation that publishes message to MQ upon file uploading completion.
  * Optional bean: initialized only if S3 keys are NOT present in the context.
  */
 @Slf4j
@@ -52,7 +48,6 @@ public class InboxSftpEventListener implements SftpEventListener {
     protected String routingKeyFiles;
 
     protected Gson gson;
-    protected RabbitTemplate rabbitTemplate;
 
     @PostConstruct
     public void init() {
@@ -205,7 +200,6 @@ public class InboxSftpEventListener implements SftpEventListener {
             fileDescriptor.setUser(username);
             fileDescriptor.setFilePath(getFilePath(dstPath, username));
             fileDescriptor.setOperation(operation.name().toLowerCase());
-            publishMessage(file, extension, fileDescriptor);
         } else if (file.exists()) {
             FileDescriptor fileDescriptor = new FileDescriptor();
             fileDescriptor.setUser(username);
@@ -222,34 +216,7 @@ public class InboxSftpEventListener implements SftpEventListener {
                         new EncryptedIntegrity(SHA_256.toLowerCase().replace("-", ""), digest)
                 });
             }
-            publishMessage(file, extension, fileDescriptor);
         }
-    }
-
-    /**
-     * Publishes message to MQ.
-     *
-     * @param file           Affected file.
-     * @param extension      Affected file's extension.
-     * @param fileDescriptor File descriptor to serialize and send.
-     * @throws IOException In case of an IO error.
-     */
-    protected void publishMessage(File file, String extension, FileDescriptor fileDescriptor) throws IOException {
-        String routingKey;
-        if (SUPPORTED_ALGORITHMS.contains(extension.toLowerCase()) || SUPPORTED_ALGORITHMS.contains(extension.toUpperCase())) {
-            String content = FileUtils.readFileToString(file, Charset.defaultCharset());
-            fileDescriptor.setContent(content);
-            routingKey = routingKeyChecksums;
-        } else {
-            routingKey = routingKeyFiles;
-        }
-        String json = gson.toJson(fileDescriptor);
-        rabbitTemplate.convertAndSend(exchange, routingKey, json, m -> {
-            m.getMessageProperties().setContentType(ContentType.APPLICATION_JSON.getMimeType());
-            m.getMessageProperties().setCorrelationId(UUID.randomUUID().toString());
-            return m;
-        });
-        log.info("Message published to {} exchange with routing key {}: {}", exchange, routingKey, json);
     }
 
     protected String getFilePath(Path path, String username) {
@@ -275,29 +242,8 @@ public class InboxSftpEventListener implements SftpEventListener {
         this.inboxFSPath = inboxFSPath;
     }
 
-    @Value("${inbox.mq.exchange}")
-    public void setExchange(String exchange) {
-        this.exchange = exchange;
-    }
-
-    @Value("${inbox.mq.routing-key.checksums}")
-    public void setRoutingKeyChecksums(String routingKeyChecksums) {
-        this.routingKeyChecksums = routingKeyChecksums;
-    }
-
-    @Value("${inbox.mq.routing-key.files}")
-    public void setRoutingKeyFiles(String routingKeyFiles) {
-        this.routingKeyFiles = routingKeyFiles;
-    }
-
     @Autowired
     public void setGson(Gson gson) {
         this.gson = gson;
     }
-
-    @Autowired
-    public void setRabbitTemplate(RabbitTemplate rabbitTemplate) {
-        this.rabbitTemplate = rabbitTemplate;
-    }
-
 }
